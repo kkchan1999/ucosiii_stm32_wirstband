@@ -49,4 +49,6 @@
 int32_t GetData(u8 REG_Address) ;
 void InitMPU6050(void);
 void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot_f);//¿¨¶ûÂüÂË²¨
+void Check_MPU6050(void);
+void Get_MPU6050_Data(void);
 #endif

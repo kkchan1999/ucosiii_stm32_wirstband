@@ -26,6 +26,8 @@
 #define RTE_DEVICE_STDPERIPH_GPIO
 /*  Keil::Device:StdPeriph Drivers:IWDG:1.3.0 */
 #define RTE_DEVICE_STDPERIPH_IWDG
+/*  Keil::Device:StdPeriph Drivers:PWR:1.3.0 */
+#define RTE_DEVICE_STDPERIPH_PWR
 /*  Keil::Device:StdPeriph Drivers:RCC:1.3.0 */
 #define RTE_DEVICE_STDPERIPH_RCC
 /*  Keil::Device:StdPeriph Drivers:RTC:1.3.0 */

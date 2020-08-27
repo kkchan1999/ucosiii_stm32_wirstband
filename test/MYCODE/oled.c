@@ -1,5 +1,5 @@
 #include "oled.h"
-
+#include "codetab.h"
 //SDAģʽ
 void Iic_Sda_Mode(GPIOMode_TypeDef Mode)
 {
@@ -408,6 +408,20 @@ void OLED_ShowStr(unsigned char x, unsigned char y, unsigned char ch[], unsigned
         }
     }
     break;
+
+    }
+}
+
+
+
+void OLED_ShowBigNum(unsigned char x, unsigned char y, unsigned char num)
+{
+    u8 i, j;
+    for (j = 0; j < 3; j++)
+    {
+        OLED_SetPos(x, y + j);
+        for (i = 0; i < 16; i++)
+            WriteDat(F16x24NUM[num * 48 + i + 16 * j]);
     }
 }
 

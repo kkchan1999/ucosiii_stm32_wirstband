@@ -8,9 +8,9 @@
 #define SDA_OUT() IIC_Change_Mode(GPIO_Mode_OUT)
 
 //IO操作函数
-#define IIC_SCL    PBout(8) //SCL
-#define IIC_SDA    PBout(9) //SDA    
-#define READ_SDA   PBin(9)  //输入SDA 
+#define IIC_SCL    PBout(10) //SCL
+#define IIC_SDA    PBout(11) //SDA    
+#define READ_SDA   PBin(11)  //输入SDA 
 
 //IIC所有操作函数
 void IIC_Init(void);              //初始化IIC的IO口
