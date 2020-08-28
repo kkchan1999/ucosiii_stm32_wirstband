@@ -1,6 +1,6 @@
 #include "MPU6050.h"
 #include "iic.h"
-#include "math.h"
+
 int16_t acc[3] = {0};
 int16_t gyr[3] = {0};
 int32_t avg[6] = {0};
@@ -14,6 +14,8 @@ float R = 0.98f;
 
 void Check_MPU6050(void)
 {
+	OS_ERR err; 
+	OSSchedLock(&err);					//阻止OS调度,防止打断
     int16_t i;
     GetData(ACCEL_XOUT_H);
     GetData(ACCEL_YOUT_H);
@@ -21,7 +23,7 @@ void Check_MPU6050(void)
     GetData(GYRO_XOUT_H);
     GetData(GYRO_YOUT_H);
     GetData(GYRO_ZOUT_H);
-    for (i = 0; i < 2000; i++)
+    for (i = 0; i < 500; i++)
     {
         acc[0] = GetData(ACCEL_XOUT_H)   ;
         acc[1] = GetData(ACCEL_YOUT_H)   ;
@@ -38,12 +40,13 @@ void Check_MPU6050(void)
         avg[5] += gyr[2];
         delay_ms(1);
     }
-    avg[0] /= 2000;
-    avg[1] /= 2000;
-    avg[2] /= 2000;
-    avg[3] /= 2000;
-    avg[4] /= 2000;
-    avg[5] /= 2000;
+    avg[0] /= 500;
+    avg[1] /= 500;
+    avg[2] /= 500;
+    avg[3] /= 500;
+    avg[4] /= 500;
+    avg[5] /= 500;
+	OSSchedUnlock(&err);					//UCOSIII的方式,恢复调度
 }
 
 void ImuCalculate_Complementary(void)//计算角度
@@ -74,30 +77,30 @@ void Get_MPU6050_Data(void)
     gyr[1]  = GetData(GYRO_YOUT_H)  - avg[4];
     gyr[2]  = GetData(GYRO_ZOUT_H)  - avg[5];
 
-    for (int i = 0; i < 3; i++)
-    {
-        Acc[i] = acc[i];
-        Gyr[i] = gyr[i];
-    }
+//    for (int i = 0; i < 3; i++)
+//    {
+//        Acc[i] = acc[i];
+//        Gyr[i] = gyr[i];
+//    }
 
-    for (int i = 0; i < 3; i++)
-    {
-        Acc[i] /= 8192.0f;
-        Gyr[i] /= 16.384f;
-    }
+//    for (int i = 0; i < 3; i++)
+//    {
+//        Acc[i] /= 8192.0f;
+//        Gyr[i] /= 16.384f;
+//    }
 
-    for (int i = 0; i < 3; i++)
-    {
-        kalman_filter(Acc[i], Gyr[i], &angle[i], &angle_dot[i]);
-    }
+//    for (int i = 0; i < 3; i++)
+//    {
+//        kalman_filter(Acc[i], Gyr[i], &angle[i], &angle_dot[i]);
+//    }
 
     printf("acc:  X=%d   Y=%d   Z=%d  \n", acc[0], acc[1], acc[2]);
     printf("gyro:  X=%d   Y=%d   Z=%d  \n", gyr[0], gyr[1], gyr[2]);
 
-    printf("ACC:  X=%f   Y=%f   Z=%f  \n", Acc[0], Acc[1], Acc[2]);
-    printf("GYRO:  X=%f   Y=%f   Z=%f  \n", Gyr[0], Gyr[1], Gyr[2]);
-    printf("angle:  X=%f   Y=%f   Z=%f  \n", angle[0], angle[1], angle[2]);
-    printf("angle dot:  X=%f   Y=%f   Z=%f  \n", angle_dot[0], angle_dot[1], angle_dot[2]);
+//    printf("ACC:  X=%f   Y=%f   Z=%f  \n", Acc[0], Acc[1], Acc[2]);
+//    printf("GYRO:  X=%f   Y=%f   Z=%f  \n", Gyr[0], Gyr[1], Gyr[2]);
+//    printf("angle:  X=%f   Y=%f   Z=%f  \n", angle[0], angle[1], angle[2]);
+//    printf("angle dot:  X=%f   Y=%f   Z=%f  \n", angle_dot[0], angle_dot[1], angle_dot[2]);
 
 }
 
