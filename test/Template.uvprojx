@@ -408,16 +408,6 @@
               <FilePath>.\MYCODE\key.c</FilePath>
             </File>
             <File>
-              <FileName>iic.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\MYCODE\iic.c</FilePath>
-            </File>
-            <File>
-              <FileName>MUP6050.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\MYCODE\MUP6050.c</FilePath>
-            </File>
-            <File>
               <FileName>oled.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\MYCODE\oled.c</FilePath>
@@ -431,6 +421,16 @@
               <FileName>show.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\MYCODE\show.c</FilePath>
+            </File>
+            <File>
+              <FileName>algorithm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\algorithm.c</FilePath>
+            </File>
+            <File>
+              <FileName>max30102.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\max30102.c</FilePath>
             </File>
           </Files>
         </Group>

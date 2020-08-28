@@ -284,12 +284,6 @@ static  void  AppTaskStart(void *p_arg)
     }
 }
 
-
-
-
-
-
-
 static  void  AppUser1TaskStart(void *p_arg)
 {
     OS_ERR  err;
@@ -380,12 +374,14 @@ static  void  AppUser3TaskStart(void *p_arg)
 
 static  void  OLEDStart(void *p_arg)
 {
+	//准确点来说这个是时间的显示，后面要配合按键改一改这个东西，要用到信号量的
     OS_ERR  err;
     OLED_Fill(0xFF);//全屏点亮
     OSTimeDlyHMSM(0u, 0u, 1u, 0u,
                   OS_OPT_TIME_HMSM_STRICT,
                   &err);//1s
-    OLED_Fill(0x00);//全屏灭
+	
+    //OLED_Fill(0x00);//全屏灭//弄成了反显，不能变成全黑，不然背景不均匀
     while (1)
     {
         PFout(9) = !PFout(9);

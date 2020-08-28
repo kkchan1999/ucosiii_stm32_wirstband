@@ -76,9 +76,6 @@ void Iic_Send_Byte(u8 data)
 
     Iic_Sda_Mode(GPIO_Mode_OUT);
 
-
-
-
     OLED_SCL = 0;
 
     for (i = 0; i < 8; i++)
@@ -421,7 +418,7 @@ void OLED_ShowBigNum(unsigned char x, unsigned char y, unsigned char num)
     {
         OLED_SetPos(x, y + j);
         for (i = 0; i < 16; i++)
-            WriteDat(F16x24NUM[num * 48 + i + 16 * j]);
+            WriteDat(~(F16x24NUM[num * 48 + i + 16 * j]));
     }
 }
 
