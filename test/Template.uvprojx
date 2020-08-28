@@ -432,6 +432,21 @@
               <FileType>1</FileType>
               <FilePath>.\MYCODE\max30102.c</FilePath>
             </File>
+            <File>
+              <FileName>MUP6050.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\MUP6050.c</FilePath>
+            </File>
+            <File>
+              <FileName>iic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\iic.c</FilePath>
+            </File>
+            <File>
+              <FileName>heartrate.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\heartrate.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

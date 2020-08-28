@@ -3,15 +3,15 @@
 #include "sys.h"
 //////////////////////////////////////////////////////////////////////////////////
 
-#define SDA_IN()  IIC_Change_Mode(GPIO_Mode_IN)
-#define SDA_OUT()  IIC_Change_Mode(GPIO_Mode_OUT)
+#define Max30102_SDA_IN()  Max30102_IIC_Change_Mode(GPIO_Mode_IN)
+#define Max30102_SDA_OUT()  Max30102_IIC_Change_Mode(GPIO_Mode_OUT)
 
 //IO????
 #define Max30102_IIC_SCL PAout(3) //SCL
 #define Max30102_IIC_SDA PAout(2) //SDA
 #define Max30102_READ_SDA PAin(2) //??SDA
 
-#define MAX30102_INT PBin(11)
+#define MAX30102_INT PBin(8)
 
 #define I2C_WR 0 /* Ð´¿ØÖÆbit */
 #define I2C_RD 1 /* ¶Á¿ØÖÆbit */
