@@ -251,6 +251,7 @@ void  BSP_Init(void)
 	InitMPU6050();//初始化MPU6050
 	OLED_Init();//初始化OLED
 	Rtc_Init();//RTC时钟初始化
+	max30102_init();
 	
 }
 

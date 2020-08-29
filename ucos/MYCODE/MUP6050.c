@@ -14,8 +14,8 @@ float R = 0.98f;
 
 void Check_MPU6050(void)
 {
-	OS_ERR err; 
-	OSSchedLock(&err);					//阻止OS调度,防止打断
+    OS_ERR err;
+    OSSchedLock(&err);                  //阻止OS调度,防止打断
     int16_t i;
     GetData(ACCEL_XOUT_H);
     GetData(ACCEL_YOUT_H);
@@ -46,7 +46,7 @@ void Check_MPU6050(void)
     avg[3] /= 500;
     avg[4] /= 500;
     avg[5] /= 500;
-	OSSchedUnlock(&err);					//UCOSIII的方式,恢复调度
+    OSSchedUnlock(&err);                    //UCOSIII的方式,恢复调度
 }
 
 void ImuCalculate_Complementary(void)//计算角度

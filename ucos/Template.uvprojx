@@ -427,6 +427,26 @@
               <FileType>1</FileType>
               <FilePath>.\MYCODE\show.c</FilePath>
             </File>
+            <File>
+              <FileName>algorithm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\algorithm.c</FilePath>
+            </File>
+            <File>
+              <FileName>max30102.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\max30102.c</FilePath>
+            </File>
+            <File>
+              <FileName>handler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\handler.c</FilePath>
+            </File>
+            <File>
+              <FileName>heartrate.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\heartrate.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

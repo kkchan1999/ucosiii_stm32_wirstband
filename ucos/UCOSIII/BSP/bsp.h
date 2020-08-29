@@ -84,6 +84,9 @@
 #include "MPU6050.h"
 #include "rtc.h"
 #include "show.h"
+#include "max30102.h"
+#include "algorithm.h"
+#include "heartrate.h"
 
 /*
 *********************************************************************************************************

@@ -411,14 +411,17 @@ void OLED_ShowStr(unsigned char x, unsigned char y, unsigned char ch[], unsigned
 
 
 
-void OLED_ShowBigNum(unsigned char x, unsigned char y, unsigned char num)
+void OLED_ShowBigNum(unsigned char x, unsigned char y, unsigned char num, u8 rev)
 {
     u8 i, j;
     for (j = 0; j < 3; j++)
     {
         OLED_SetPos(x, y + j);
         for (i = 0; i < 16; i++)
+		if(rev)
             WriteDat(~(F16x24NUM[num * 48 + i + 16 * j]));
+		else
+			WriteDat((F16x24NUM[num * 48 + i + 16 * j]));
     }
 }
 
