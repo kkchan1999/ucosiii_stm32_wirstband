@@ -16,11 +16,11 @@ void ShowTime(unsigned char x, unsigned char y)
     {
         if (i == 2 || i == 5)
         {
-            OLED_ShowBigNum(i * 16 + x, y, 10,1);
+            OLED_ShowBigNum(i * 16 + x, y, 10, 0);
             j--;
             continue;
         }
-        OLED_ShowBigNum(i * 16 + x, y, t[j],1);
+        OLED_ShowBigNum(i * 16 + x, y, t[j], 0);
     }
 }
 
@@ -40,11 +40,11 @@ void ShowDate(unsigned char x, unsigned char y)
     {
         if (i == 2 || i == 5)
         {
-            OLED_ShowBigNum(i * 16 + x, y, 11,1);
+            OLED_ShowBigNum(i * 16 + x, y, 11, 0);
             j--;
             continue;
         }
-        OLED_ShowBigNum(i * 16 + x, y, d[j],1);
+        OLED_ShowBigNum(i * 16 + x, y, d[j], 0);
     }
 
 }

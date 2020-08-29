@@ -165,9 +165,9 @@ int16_t Show_HR(void)
             ret += HR;
             count++;
             OLED_CLS();
-            OLED_ShowBigNum(0, 0, HR / 100,0);
-            OLED_ShowBigNum(16, 0, (HR % 100) / 10,0);
-            OLED_ShowBigNum(32, 0, (HR % 10),0);
+            OLED_ShowBigNum(0, 0, HR / 100, 0);
+            OLED_ShowBigNum(16, 0, (HR % 100) / 10, 0);
+            OLED_ShowBigNum(32, 0, (HR % 10), 0);
         }
         if (count >= 5)
         {
