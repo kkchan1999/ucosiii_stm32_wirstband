@@ -152,9 +152,10 @@ int16_t Show_HR(void)
 {
     u8 count, HR, i;
     int16_t ret;
-
+    count = 0;
     HR_init();//≥ı ºªØ
 
+    while (!check_heart_rate());
     for (i = 0; i < 40; i++)
     {
         HR = check_heart_rate();
@@ -163,18 +164,20 @@ int16_t Show_HR(void)
         {
             ret += HR;
             count++;
-			OLED_CLS();
+            OLED_CLS();
             OLED_ShowBigNum(0, 0, HR / 100);
-			OLED_ShowBigNum(16, 0, (HR % 100) / 10);
-			OLED_ShowBigNum(32, 0, ((HR % 100) / 10) % 10);
-            delay_s(1);
+            OLED_ShowBigNum(16, 0, (HR % 100) / 10);
+            OLED_ShowBigNum(32, 0, (HR % 10));
         }
         if (count >= 5)
         {
-          printf("RET : %d\n",ret / count);
+            printf("ret : %d\n", ret);
+            printf("count : %d\n", count);
+            printf("RET : %d\n", ret / count);
             return (ret / count);
         }
     }
+
     return 0;
 
 }

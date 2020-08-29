@@ -22,15 +22,15 @@ int main(void)
     Usart1_Init();
     max30102_init();
     OLED_Init();
-    HR_init();
+//    HR_init();
     while (1)
     {
         HR = Show_HR();
         OLED_CLS();
         OLED_ShowBigNum(0, 0, HR / 100);
         OLED_ShowBigNum(16, 0, (HR % 100) / 10);
-        OLED_ShowBigNum(32, 0, ((HR % 100) / 10) % 10);
-		OLED_ShowBigNum(48,0,10);
-		delay_s(1);
+        OLED_ShowBigNum(32, 0, (HR % 10));
+        OLED_ShowBigNum(48, 0, 10);
+        delay_s(1);
     }
 }
