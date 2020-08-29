@@ -16,10 +16,10 @@ extern OS_SEM      Menu_sem;
 extern u8 Menu_time;	//弄个时间限制，太久没反应的话直接返回时间显示界面
 extern u8 sleek;		//记录目前是啥功能
 extern u8 Menu_flag;	//进入menu的标识
-
+extern u8 Menu_enter;
 
 //编写中断服务函数。这个函数不需要程序员在主函数调用，满足条件CPU自行调用的函数
-void EXTI0_IRQHandler(void)//按键1
+void EXTI0_IRQHandler(void)//按键1 prev
 {
     OSIntEnter();
     u8 flag;//弄个flag用来消抖
@@ -53,7 +53,7 @@ void EXTI0_IRQHandler(void)//按键1
 
 }
 
-void EXTI2_IRQHandler(void)//按键2
+void EXTI2_IRQHandler(void)//按键2 next
 {
     OSIntEnter();
     u8 flag;//弄个flag用来消抖
@@ -88,7 +88,7 @@ void EXTI2_IRQHandler(void)//按键2
     OSIntExit();
 }
 
-void EXTI3_IRQHandler(void)//按键3
+void EXTI3_IRQHandler(void)//按键3 enter
 {
     OSIntEnter();
     u8 flag;//弄个flag用来消抖
@@ -102,8 +102,16 @@ void EXTI3_IRQHandler(void)//按键3
             OSSemPost((OS_SEM *)&Menu_sem,            //信号量控制块,
                       (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                       (OS_ERR *)&err);
-            //变更灯状态
-            GPIO_ToggleBits(GPIOE, GPIO_Pin_13);
+            	
+			if(Menu_flag!=0)//必须确定在目录里面才能用
+			{
+				//在这里写功能
+				Menu_enter = 1;
+				GPIO_ToggleBits(GPIOE, GPIO_Pin_13);//变更灯状态
+			}
+			
+			Menu_flag = 1;
+			
 
         }
         EXTI_ClearITPendingBit(EXTI_Line3);//清空标志位
@@ -111,24 +119,31 @@ void EXTI3_IRQHandler(void)//按键3
     OSIntExit();
 }
 
-void EXTI4_IRQHandler(void)//按键4
+void EXTI4_IRQHandler(void)//按键4 exit
 {
     OSIntEnter();
     u8 flag;//弄个flag用来消抖
-    //判断中断标志是否为1
-    if (EXTI_GetITStatus(EXTI_Line4) == SET)
+    
+    if (EXTI_GetITStatus(EXTI_Line4) == SET)//判断中断标志是否为1
     {
         delay_ms(10);
         flag = GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_4);//读取一下按键的电平
         if (RESET == flag) //在这下面干活
         {
-			GPIO_ToggleBits(GPIOE, GPIO_Pin_14);
             OSSemPost((OS_SEM *)&Menu_sem,            //信号量控制块,
                       (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                       (OS_ERR *)&err);
 //            OSSemPost((OS_SEM *)&HR_sem,              //信号量控制块,
 //                      (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
 //                      (OS_ERR *)&err);
+			
+			if(Menu_flag != 0)//必须确定在目录里面才能用
+			{
+				//在这里写功能
+				GPIO_ToggleBits(GPIOE, GPIO_Pin_14);//变更灯状态
+			}
+			
+			Menu_flag = 1;
 
         }
         EXTI_ClearITPendingBit(EXTI_Line4);            //清空标志位

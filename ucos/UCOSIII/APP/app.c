@@ -65,16 +65,16 @@ static  OS_TCB   MenuStartTCB;
 static  CPU_STK  MenuStartStk[APP_CFG_TASK_START_STK_SIZE];  //长度128*4 = 512字节
 static  void     MenuStart(void     *p_arg);
 
-OS_FLAG_GRP  	my_grp;    //事件标志组控制块，好像没啥用，可以先留着
-OS_SEM      	HR_sem;     //心率二值信号量控制块
-OS_SEM      	OLED_sem;   //OLED信号量
-OS_SEM      	Menu_sem;   //目录信号量
+OS_FLAG_GRP     my_grp;    //事件标志组控制块，好像没啥用，可以先留着
+OS_SEM          HR_sem;     //心率二值信号量控制块
+OS_SEM          OLED_sem;   //OLED信号量
+OS_SEM          Menu_sem;   //目录信号量
 
 //这两个都是目录用的
-u8 Menu_time;	//弄个时间限制，太久没反应的话直接返回时间显示界面
-u8 sleek;		//记录目前是啥功能
+u8 Menu_time;   //弄个时间限制，太久没反应的话直接返回时间显示界面
+u8 sleek;       //记录目前是啥功能
 u8 Menu_flag = 0;//当这个flag是0的时候，menu没打开，当flag为1的时候，进入了menu
-
+u8 Menu_enter = 0;
 int main(void)
 {
     OS_ERR  err;
@@ -309,12 +309,13 @@ static  void  Max30102Start(void *p_arg)
 static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
 {
     OS_ERR  err;
-    
+
     while (1)
-    {	
-		u8 temp = 100;//弄成一个不会重复的值，不然会有bug（按下去第一下之刷新一部分屏幕）
-		sleek = 0;
+    {
+        u8 temp = 100;//弄成一个不会重复的值，不然会有bug（按下去第一下之刷新一部分屏幕）
+        sleek = 0;
         Menu_time = 0;
+		Menu_enter = 0;
         //阻塞等待按键的按下，获得menu的信号
         OSSemPend((OS_SEM *)&Menu_sem,      //信号量控制块,
                   (OS_TICK)0,             //阻塞等待
@@ -328,53 +329,88 @@ static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
                   (OS_OPT)OS_OPT_PEND_BLOCKING,    //阻塞模式
                   (CPU_TS *)NULL,         //不记录接受的时间
                   (OS_ERR *)&err);
-		
+        Menu_flag = 1;//进入菜单状态
+
         while (Menu_time < 5) //选择的功能在这里面干
         {
-			if(temp != sleek)//检测是不是没变，没变就不刷新了
-			{
-				OLED_CLS();
-			}
-			
-			temp = sleek;
-			OLED_SetPos(0,0);//起始点坐标
-			switch (sleek)
-			{
-				case 0:
-					OLED_ShowStr(0, 0, "menu 0", 2);
-					break;
-				case 1:
-					OLED_ShowStr(0, 0, "menu 1", 2);
-					break;
-				case 2:
-					OLED_ShowStr(0, 0, "menu 2", 2);
-					break;
-				case 3:
-					OLED_ShowStr(0, 0, "menu 3", 2);
-					break;
-				default:
-					OLED_ShowStr(0, 0, "error", 2);
-					break;
-			}
-			
+            if (temp != sleek) //检测是不是没变，没变就不刷新了
+            {
+                OLED_CLS();
+            }
+
+            temp = sleek;
+            OLED_SetPos(0, 0); //起始点坐标
+            switch (sleek)
+            {
+            case 0:
+                OLED_ShowStr(0, 0, "menu 0", 2);
+                if (Menu_enter != 0)
+                {
+                    //证明按了enter
+                    Menu_enter = 0;
+                }
+
+				
+
+                break;
+            case 1:
+                OLED_ShowStr(0, 0, "HR", 2);
+
+                if (Menu_enter != 0)//证明按了enter
+                {
+					//进入心率检测功能
+                    OSSemPost((OS_SEM *)&HR_sem,              //信号量控制块,
+                              (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
+                              (OS_ERR *)&err);
+					
+					Menu_time =100;//整个数退出循环
+					
+                    
+                    Menu_enter = 0;
+                }
+                break;
+            case 2:
+                OLED_ShowStr(0, 0, "menu 2", 2);
+                if (Menu_enter != 0)
+                {
+                    //证明按了enter
+                    Menu_enter = 0;
+                }
+                break;
+            case 3:
+                OLED_ShowStr(0, 0, "menu 3", 2);
+                if (Menu_enter != 0)
+                {
+                    //证明按了enter
+                    Menu_enter = 0;
+                }
+                break;
+            default:
+                OLED_ShowStr(0, 0, "error", 2);
+                break;
+            }
+
             Menu_time++;//时间控制
             OSTimeDlyHMSM(0u, 0u, 1u, 0u,
                           OS_OPT_TIME_HMSM_STRICT,
                           &err);//1s
         }
 
-		OLED_CLS();//退出的时候清一下屏
-		
-		
-		OSSemSet((OS_SEM*    )&Menu_sem,
-				 (OS_SEM_CTR )0,
-                 (OS_ERR*    )&err);
-		
-		OSSemSet((OS_SEM*    )&OLED_sem,
-				 (OS_SEM_CTR )0,
-                 (OS_ERR*    )&err);
-		
-		
+        OLED_CLS();//退出的时候清一下屏
+
+        Menu_flag = 0;//退出菜单状态
+
+
+        //这下面是防止按键按得太多，sem加得太多导致退不出去
+        OSSemSet((OS_SEM *)&Menu_sem,
+                 (OS_SEM_CTR)0,
+                 (OS_ERR *)&err);
+
+        OSSemSet((OS_SEM *)&OLED_sem,
+                 (OS_SEM_CTR)0,
+                 (OS_ERR *)&err);
+
+
         OSSemPost((OS_SEM *)&OLED_sem,            //信号量控制块,
                   (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                   (OS_ERR *)&err);
