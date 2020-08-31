@@ -75,6 +75,12 @@ u8 Menu_time;   //弄个时间限制，太久没反应的话直接返回时间显示界面
 u8 sleek;       //记录目前是啥功能
 u8 Menu_flag = 0;//当这个flag是0的时候，menu没打开，当flag为1的时候，进入了menu
 u8 Menu_enter = 0;
+
+extern int16_t step_cnt;//计步的
+
+
+
+
 int main(void)
 {
     OS_ERR  err;
@@ -248,12 +254,12 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
                       &err);//1s
         ShowDate(0, 0);
         ShowTime(0, 4);
-		
-		
-		OSSemSet((OS_SEM *)&OLED_sem,
+
+
+        OSSemSet((OS_SEM *)&OLED_sem,
                  (OS_SEM_CTR)0,
                  (OS_ERR *)&err);
-		
+
         OSSemPost((OS_SEM *)&OLED_sem,            //信号量控制块,
                   (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                   (OS_ERR *)&err);
@@ -262,15 +268,32 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
 
 static  void  MPU6050Start(void *p_arg)
 {
+    
+    int16_t temp = step_cnt;
     OS_ERR  err;
+    filter_avg_t filter;
+    peak_value_t peak;
+    slid_reg_t slid;
+    axis_info_t sample;
+
     Check_MPU6050();//校准
 
     while (1)
     {
-        OSTimeDlyHMSM(0u, 0u, 0u, 500u,
+        OSTimeDlyHMSM(0u, 0u, 0u, 40u,
                       OS_OPT_TIME_HMSM_STRICT,
-                      &err);//0.5s
-        Get_MPU6050_Data();//目前只是打印出来
+                      &err);//40ms
+        get_4_gyr_data(&filter);
+        filter_calculate(&filter, &sample);
+        peak_update(&peak, &sample);
+        slid_update(&slid, &sample);
+        detect_step(&peak, &slid, &sample);
+
+        if (temp != step_cnt)
+        {
+            printf("%d\n", step_cnt);
+            temp = step_cnt;
+        }
     }
 }
 
@@ -292,10 +315,10 @@ static  void  Max30102Start(void *p_arg)
                   (CPU_TS *)NULL,         //不记录接受的时间
                   (OS_ERR *)&err);
 
-		OLED_ShowStr(0, 0, "Heart Rate Start", 2);
+        OLED_ShowStr(0, 0, "Heart Rate Start", 2);
 
         HR = Show_HR();//初始化心率
-		OSTimeDlyHMSM(0u, 0u, 1u, 0u,
+        OSTimeDlyHMSM(0u, 0u, 1u, 0u,
                       OS_OPT_TIME_HMSM_STRICT,
                       &err);//5s
         OLED_CLS();
@@ -325,7 +348,7 @@ static  void  Max30102Start(void *p_arg)
 static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
 {
     OS_ERR  err;
-
+	char info[64] = {0};
     while (1)
     {
         u8 temp = 100;//弄成一个不会重复的值，不然会有bug（按下去第一下之刷新一部分屏幕）
@@ -389,15 +412,24 @@ static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
                 OLED_ShowStr(0, 0, "menu 2", 2);
                 if (Menu_enter != 0)
                 {
-                    //证明按了enter
+					
+					
+					Menu_time = 100; //整个数退出循环
                     Menu_enter = 0;
                 }
                 break;
             case 3:
-                OLED_ShowStr(0, 0, "menu 3", 2);
+                OLED_ShowStr(0, 0, "step", 2);
                 if (Menu_enter != 0)
                 {
+					sprintf(info,"step cnt : %d",step_cnt);
                     //证明按了enter
+					OLED_CLS();
+					OLED_ShowStr(0, 0, info, 2);
+					OSTimeDlyHMSM(0u, 0u, 3u, 0u,
+                          OS_OPT_TIME_HMSM_STRICT,
+                          &err);//1s
+					Menu_time = 100; //整个数退出循环
                     Menu_enter = 0;
                 }
                 break;

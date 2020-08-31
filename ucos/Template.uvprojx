@@ -408,11 +408,6 @@
               <FilePath>.\MYCODE\iic.c</FilePath>
             </File>
             <File>
-              <FileName>MUP6050.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\MYCODE\MUP6050.c</FilePath>
-            </File>
-            <File>
               <FileName>oled.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\MYCODE\oled.c</FilePath>
@@ -446,6 +441,16 @@
               <FileName>heartrate.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\MYCODE\heartrate.c</FilePath>
+            </File>
+            <File>
+              <FileName>MPU6050.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\MPU6050.c</FilePath>
+            </File>
+            <File>
+              <FileName>step.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\step.c</FilePath>
             </File>
           </Files>
         </Group>

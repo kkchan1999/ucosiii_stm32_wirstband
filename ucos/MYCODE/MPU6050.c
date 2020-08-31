@@ -6,8 +6,8 @@ int16_t gyr[3] = {0};
 int32_t avg[6] = {0};
 float Acc[3] = {0};
 float Gyr[3] = {0};
-const float fRad2Deg = 57.295779513f; //»¡¶È»»Ëã½Ç¶È³ËµÄÏµÊı
-const float dt = 0.005; //Ê±¼äÖÜÆÚ
+const float fRad2Deg = 57.295779513f; //å¼§åº¦æ¢ç®—è§’åº¦ä¹˜çš„ç³»æ•°
+const float dt = 0.005;               //æ—¶é—´å‘¨æœŸ
 float angle[3] = {0};
 float angle_dot[3] = {0};
 float R = 0.98f;
@@ -15,7 +15,7 @@ float R = 0.98f;
 void Check_MPU6050(void)
 {
     OS_ERR err;
-    OSSchedLock(&err);                  //×èÖ¹OSµ÷¶È,·ÀÖ¹´ò¶Ï
+    OSSchedLock(&err); //é˜»æ­¢OSè°ƒåº¦,é˜²æ­¢æ‰“æ–­
     int16_t i;
     GetData(ACCEL_XOUT_H);
     GetData(ACCEL_YOUT_H);
@@ -25,12 +25,12 @@ void Check_MPU6050(void)
     GetData(GYRO_ZOUT_H);
     for (i = 0; i < 500; i++)
     {
-        acc[0] = GetData(ACCEL_XOUT_H)   ;
-        acc[1] = GetData(ACCEL_YOUT_H)   ;
-        acc[2] = GetData(ACCEL_ZOUT_H)   ;
-        gyr[0] = GetData(GYRO_XOUT_H)    ;
-        gyr[1] = GetData(GYRO_YOUT_H)    ;
-        gyr[2] = GetData(GYRO_ZOUT_H)    ;
+        acc[0] = GetData(ACCEL_XOUT_H);
+        acc[1] = GetData(ACCEL_YOUT_H);
+        acc[2] = GetData(ACCEL_ZOUT_H);
+        gyr[0] = GetData(GYRO_XOUT_H);
+        gyr[1] = GetData(GYRO_YOUT_H);
+        gyr[2] = GetData(GYRO_ZOUT_H);
 
         avg[0] += acc[0];
         avg[1] += acc[1];
@@ -46,10 +46,10 @@ void Check_MPU6050(void)
     avg[3] /= 500;
     avg[4] /= 500;
     avg[5] /= 500;
-    OSSchedUnlock(&err);                    //UCOSIIIµÄ·½Ê½,»Ö¸´µ÷¶È
+    OSSchedUnlock(&err); //UCOSIIIçš„æ–¹å¼,æ¢å¤è°ƒåº¦
 }
 
-void ImuCalculate_Complementary(void)//¼ÆËã½Ç¶È
+void ImuCalculate_Complementary(void) //è®¡ç®—è§’åº¦
 {
     u8 i;
     static float angle_last[3] = {0};
@@ -59,8 +59,7 @@ void ImuCalculate_Complementary(void)//¼ÆËã½Ç¶È
 
     for (i = 0; i < 2; i++) //pitch and roll
     {
-        angle[i] = R * (angle_last[i] + Gyr[i] * dt)
-                   + (1 - R) * fRad2Deg * atan(Acc[i] / temp[i]);
+        angle[i] = R * (angle_last[i] + Gyr[i] * dt) + (1 - R) * fRad2Deg * atan(Acc[i] / temp[i]);
         angle_last[i] = angle[i];
     }
 
@@ -70,92 +69,90 @@ void ImuCalculate_Complementary(void)//¼ÆËã½Ç¶È
 
 void Get_MPU6050_Data(void)
 {
-    acc[0]  = GetData(ACCEL_XOUT_H) - avg[0];
-    acc[1]  = GetData(ACCEL_YOUT_H) - avg[1];
-    acc[2]  = GetData(ACCEL_ZOUT_H) - avg[2] + 8192;
-    gyr[0]  = GetData(GYRO_XOUT_H)  - avg[3];
-    gyr[1]  = GetData(GYRO_YOUT_H)  - avg[4];
-    gyr[2]  = GetData(GYRO_ZOUT_H)  - avg[5];
+    acc[0] = GetData(ACCEL_XOUT_H) - avg[0];
+    acc[1] = GetData(ACCEL_YOUT_H) - avg[1];
+    acc[2] = GetData(ACCEL_ZOUT_H) - avg[2] + 8192;
+    gyr[0] = GetData(GYRO_XOUT_H) - avg[3];
+    gyr[1] = GetData(GYRO_YOUT_H) - avg[4];
+    gyr[2] = GetData(GYRO_ZOUT_H) - avg[5];
 
-//    for (int i = 0; i < 3; i++)
-//    {
-//        Acc[i] = acc[i];
-//        Gyr[i] = gyr[i];
-//    }
+    //    for (int i = 0; i < 3; i++)
+    //    {
+    //        Acc[i] = acc[i];
+    //        Gyr[i] = gyr[i];
+    //    }
 
-//    for (int i = 0; i < 3; i++)
-//    {
-//        Acc[i] /= 8192.0f;
-//        Gyr[i] /= 16.384f;
-//    }
+    //    for (int i = 0; i < 3; i++)
+    //    {
+    //        Acc[i] /= 8192.0f;
+    //        Gyr[i] /= 16.384f;
+    //    }
 
-//    for (int i = 0; i < 3; i++)
-//    {
-//        kalman_filter(Acc[i], Gyr[i], &angle[i], &angle_dot[i]);
-//    }
+    //    for (int i = 0; i < 3; i++)
+    //    {
+    //        kalman_filter(Acc[i], Gyr[i], &angle[i], &angle_dot[i]);
+    //    }
 
     printf("acc:  X=%d   Y=%d   Z=%d  \n", acc[0], acc[1], acc[2]);
     printf("gyro:  X=%d   Y=%d   Z=%d  \n", gyr[0], gyr[1], gyr[2]);
 
-//    printf("ACC:  X=%f   Y=%f   Z=%f  \n", Acc[0], Acc[1], Acc[2]);
-//    printf("GYRO:  X=%f   Y=%f   Z=%f  \n", Gyr[0], Gyr[1], Gyr[2]);
-//    printf("angle:  X=%f   Y=%f   Z=%f  \n", angle[0], angle[1], angle[2]);
-//    printf("angle dot:  X=%f   Y=%f   Z=%f  \n", angle_dot[0], angle_dot[1], angle_dot[2]);
-
+    //    printf("ACC:  X=%f   Y=%f   Z=%f  \n", Acc[0], Acc[1], Acc[2]);
+    //    printf("GYRO:  X=%f   Y=%f   Z=%f  \n", Gyr[0], Gyr[1], Gyr[2]);
+    //    printf("angle:  X=%f   Y=%f   Z=%f  \n", angle[0], angle[1], angle[2]);
+    //    printf("angle dot:  X=%f   Y=%f   Z=%f  \n", angle_dot[0], angle_dot[1], angle_dot[2]);
 }
 
-
 //**************************************
-//ÏòI2CÉè±¸Ğ´ÈëÒ»¸ö×Ö½ÚÊı¾İ
+//å‘I2Cè®¾å¤‡å†™å…¥ä¸€ä¸ªå­—èŠ‚æ•°æ®
 //**************************************
 void Single_WriteI2C(u8 REG_Address, u8 REG_data)
 {
-    IIC_Start();                  //ÆğÊ¼ĞÅºÅ
-    IIC_Send_Byte(SlaveAddress);   //·¢ËÍÉè±¸µØÖ·+Ğ´ĞÅºÅ
-    IIC_Send_Byte(REG_Address);    //ÄÚ²¿¼Ä´æÆ÷µØÖ·£¬
-    IIC_Send_Byte(REG_data);       //ÄÚ²¿¼Ä´æÆ÷Êı¾İ£¬
-    IIC_Stop();                   //·¢ËÍÍ£Ö¹ĞÅºÅ
+    IIC_Start();                 //èµ·å§‹ä¿¡å·
+    IIC_Send_Byte(SlaveAddress); //å‘é€è®¾å¤‡åœ°å€+å†™ä¿¡å·
+    IIC_Send_Byte(REG_Address);  //å†…éƒ¨å¯„å­˜å™¨åœ°å€ï¼Œ
+    IIC_Send_Byte(REG_data);     //å†…éƒ¨å¯„å­˜å™¨æ•°æ®ï¼Œ
+    IIC_Stop();                  //å‘é€åœæ­¢ä¿¡å·
 }
 
 //**************************************
-//´ÓI2CÉè±¸¶ÁÈ¡Ò»¸ö×Ö½ÚÊı¾İ
+//ä»I2Cè®¾å¤‡è¯»å–ä¸€ä¸ªå­—èŠ‚æ•°æ®
 //**************************************
 u8 Single_ReadI2C(u8 REG_Address)
 {
     u8 REG_data, ack;
-    IIC_Start();                   //ÆğÊ¼ĞÅºÅ
-    ack = IIC_Send_Byte(SlaveAddress);    //·¢ËÍÉè±¸µØÖ·+Ğ´ĞÅºÅ
+    IIC_Start();                       //èµ·å§‹ä¿¡å·
+    ack = IIC_Send_Byte(SlaveAddress); //å‘é€è®¾å¤‡åœ°å€+å†™ä¿¡å·
     if (ack)
     {
         printf("ack err1!\n");
     }
-    ack = IIC_Send_Byte(REG_Address);    //·¢ËÍ´æ´¢µ¥ÔªµØÖ·£¬´Ó0¿ªÊ¼
+    ack = IIC_Send_Byte(REG_Address); //å‘é€å­˜å‚¨å•å…ƒåœ°å€ï¼Œä»0å¼€å§‹
     if (ack)
     {
         printf("ack err2!\n");
     }
-    IIC_Start();                   //ÆğÊ¼ĞÅºÅ
-    ack = IIC_Send_Byte(SlaveAddress + 1); //·¢ËÍÉè±¸µØÖ·+¶ÁĞÅºÅ
+    IIC_Start();                           //èµ·å§‹ä¿¡å·
+    ack = IIC_Send_Byte(SlaveAddress + 1); //å‘é€è®¾å¤‡åœ°å€+è¯»ä¿¡å·
     if (ack)
     {
         printf("ack err3!\n");
     }
-    REG_data = IIC_Read_Byte(0);     //¶Á³ö¼Ä´æÆ÷Êı¾İ   0   NACK   1  ACK
-    IIC_Stop();                    //Í£Ö¹ĞÅºÅ
+    REG_data = IIC_Read_Byte(0); //è¯»å‡ºå¯„å­˜å™¨æ•°æ®   0   NACK   1  ACK
+    IIC_Stop();                  //åœæ­¢ä¿¡å·
     return REG_data;
 }
 
 //**************************************
-//³õÊ¼»¯MPU6050
+//åˆå§‹åŒ–MPU6050
 //**************************************
 void InitMPU6050(void)
 {
     //IIC(&dis[0],1,0x1c,GY_ADDR,WRITE);
-//      Single_WriteI2C(PWR_MGMT_1, 0x00);  //½â³ıĞİÃß×´Ì¬
-//        Single_WriteI2C(SMPLRT_DIV, 0x07);
-//        Single_WriteI2C(CONFIG, 0x06);
-//        Single_WriteI2C(GYRO_CONFIG, 0x18);
-//        Single_WriteI2C(ACCEL_CONFIG, 0x01);
+    //      Single_WriteI2C(PWR_MGMT_1, 0x00);  //è§£é™¤ä¼‘çœ çŠ¶æ€
+    //        Single_WriteI2C(SMPLRT_DIV, 0x07);
+    //        Single_WriteI2C(CONFIG, 0x06);
+    //        Single_WriteI2C(GYRO_CONFIG, 0x18);
+    //        Single_WriteI2C(ACCEL_CONFIG, 0x01);
 
     IIC_Init();
     delay_ms(10);
@@ -168,12 +165,10 @@ void InitMPU6050(void)
     Single_WriteI2C(MPU_60X0_GYRO_CONFIG_REG_ADDR, MPU_60X0_GYRO_CONFIG_REG_VALU);
     Single_WriteI2C(MPU_60X0_ACCEL_CONFIG_REG_ADDR, MPU_60X0_ACCEL_CONFIG_REG_VALU);
     Single_WriteI2C(MPU_60X0_FIFO_EN_REG_ADDR, MPU_60X0_FIFO_EN_REG_VALU);
-
 }
 
-
 //**************************************
-//ºÏ³ÉÊı¾İ
+//åˆæˆæ•°æ®
 //**************************************
 int32_t GetData(u8 REG_Address)
 {
@@ -181,8 +176,7 @@ int32_t GetData(u8 REG_Address)
     H = Single_ReadI2C(REG_Address);
     L = Single_ReadI2C(REG_Address + 1);
 
-    return (H << 8) + L; //ºÏ³ÉÊı¾İ
-
+    return (H << 8) + L; //åˆæˆæ•°æ®
 }
 
 void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot_f)
@@ -191,17 +185,16 @@ void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot
     static float angle, angle_dot;
     const float Q_angle = 0.000001, Q_gyro = 0.0001, R_angle = 0.5, dt = 0.002;
     static float P[2][2] =
-    {
-        { 1, 0 },
-        { 0, 1 }
-    };
+        {
+            {1, 0},
+            {0, 1}};
     static float Pdot[4] = {0, 0, 0, 0};
     const u8 C_0 = 1;
     static float q_bias, angle_err, PCt_0, PCt_1, E, K_0, K_1, t_0, t_1;
     //------------------------------
     angle += (gyro_m - q_bias) * dt;
 
-    Pdot[0]  = Q_angle - P[0][1] - P[1][0];
+    Pdot[0] = Q_angle - P[0][1] - P[1][0];
     Pdot[1] = -P[1][1];
     Pdot[2] = -P[1][1];
     Pdot[3] = Q_gyro;
@@ -229,12 +222,43 @@ void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot
     P[1][0] -= K_1 * t_0;
     P[1][1] -= K_1 * t_1;
 
-    angle   += K_0 * angle_err;
+    angle += K_0 * angle_err;
     q_bias += K_1 * angle_err;
     angle_dot = gyro_m - q_bias;
 
     *angle_f = angle;
     *angle_dot_f = angle_dot;
 }
+
+void get_4_gyr_data(filter_avg_t *filter)
+{
+	OS_ERR  err;
+    u8 i;
+    for (i = 0; i < FILTER_CNT; i++)
+    {
+		OSTimeDlyHMSM(0u, 0u, 0u, 40u,//å»¶æ—¶40ms
+                      OS_OPT_TIME_HMSM_STRICT,
+                      &err);//0.5s
+        filter->info[i].x = GetData(GYRO_XOUT_H) - avg[3];
+        filter->info[i].y = GetData(GYRO_YOUT_H) - avg[4];
+        filter->info[i].z = GetData(GYRO_ZOUT_H) - avg[5];
+    }
+}
+
+void get_4_acc_data(filter_avg_t *filter)
+{
+	OS_ERR  err;
+    u8 i;
+    for (i = 0; i < FILTER_CNT; i++)
+    {
+		OSTimeDlyHMSM(0u, 0u, 0u, 40u,//å»¶æ—¶40ms
+                      OS_OPT_TIME_HMSM_STRICT,
+                      &err);//0.5s
+        filter->info[i].x = GetData(ACCEL_XOUT_H) - avg[0];
+        filter->info[i].y = GetData(ACCEL_YOUT_H) - avg[1];
+        filter->info[i].z = GetData(ACCEL_ZOUT_H) - avg[2];
+    }
+}
+
 
 
