@@ -158,11 +158,11 @@ void peak_value_init(peak_value_t *peak)
 //    peak->newmin.x = temp.x;
 //    peak->newmin.y = temp.y;
 //    peak->newmin.z = temp.z;
-	peak->newmax.x=0;
-	peak->newmax.y=0;
-	peak->newmax.z=0;
+    peak->newmax.x = 0;
+    peak->newmax.y = 0;
+    peak->newmax.z = 0;
 
-	peak->newmin.x=8192;
-	peak->newmin.y=8192;
-	peak->newmin.z=8192;
+    peak->newmin.x = 8192;
+    peak->newmin.y = 8192;
+    peak->newmin.z = 8192;
 }

@@ -185,9 +185,10 @@ void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot
     static float angle, angle_dot;
     const float Q_angle = 0.000001, Q_gyro = 0.0001, R_angle = 0.5, dt = 0.002;
     static float P[2][2] =
-        {
-            {1, 0},
-            {0, 1}};
+    {
+        {1, 0},
+        {0, 1}
+    };
     static float Pdot[4] = {0, 0, 0, 0};
     const u8 C_0 = 1;
     static float q_bias, angle_err, PCt_0, PCt_1, E, K_0, K_1, t_0, t_1;
@@ -232,11 +233,11 @@ void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot
 
 void get_4_gyr_data(filter_avg_t *filter)
 {
-	OS_ERR  err;
+    OS_ERR  err;
     u8 i;
     for (i = 0; i < FILTER_CNT; i++)
     {
-		OSTimeDlyHMSM(0u, 0u, 0u, 40u,//延时40ms
+        OSTimeDlyHMSM(0u, 0u, 0u, 40u,//延时40ms
                       OS_OPT_TIME_HMSM_STRICT,
                       &err);//0.5s
         filter->info[i].x = GetData(GYRO_XOUT_H) - avg[3];
@@ -247,11 +248,11 @@ void get_4_gyr_data(filter_avg_t *filter)
 
 void get_4_acc_data(filter_avg_t *filter)
 {
-	OS_ERR  err;
+    OS_ERR  err;
     u8 i;
     for (i = 0; i < FILTER_CNT; i++)
     {
-		OSTimeDlyHMSM(0u, 0u, 0u, 40u,//延时40ms
+        OSTimeDlyHMSM(0u, 0u, 0u, 40u,//延时40ms
                       OS_OPT_TIME_HMSM_STRICT,
                       &err);//0.5s
         filter->info[i].x = GetData(ACCEL_XOUT_H) - avg[0];

@@ -69,7 +69,7 @@ OS_FLAG_GRP     my_grp;    //事件标志组控制块，好像没啥用，可以先留着
 OS_SEM          HR_sem;     //心率二值信号量控制块
 OS_SEM          OLED_sem;   //OLED信号量
 OS_SEM          Menu_sem;   //目录信号量
-
+OS_SEM          Sleep_sem;  //睡大觉，什么都不显示了
 //这两个都是目录用的
 u8 Menu_time;   //弄个时间限制，太久没反应的话直接返回时间显示界面
 u8 sleek;       //记录目前是啥功能
@@ -144,6 +144,12 @@ static  void  AppTaskStart(void *p_arg)
     OSSemCreate((OS_SEM *)&Menu_sem,          //控制块s
                 (CPU_CHAR *)"Menu_sem",       //信号量名字
                 (OS_SEM_CTR)0,                //一开始的时候是0，需要的时候才置1
+                (OS_ERR *)&err);
+
+
+    OSSemCreate((OS_SEM *)&Sleep_sem,          //控制块
+                (CPU_CHAR *)"Sleep_sem",       //信号量名字
+                (OS_SEM_CTR)1,                //一开始的时候是0，需要的时候才置1
                 (OS_ERR *)&err);
 
 
@@ -234,6 +240,7 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
 {
     //准确点来说这个是时间的显示，后面要配合按键改一改这个东西，要用到信号量的
     OS_ERR  err;
+    u8 count = 0;
     OLED_Fill(0xFF);//全屏点亮
     OSTimeDlyHMSM(0u, 0u, 1u, 0u,
                   OS_OPT_TIME_HMSM_STRICT,
@@ -242,6 +249,11 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
     OLED_Fill(0x00);//全屏灭//弄成了反显，不能变成全黑，不然背景不均匀
     while (1)
     {
+        OSSemPend((OS_SEM *)&Sleep_sem,      //信号量控制块,
+                  (OS_TICK)0,             //阻塞等待
+                  (OS_OPT)OS_OPT_PEND_BLOCKING,    //阻塞模式
+                  (CPU_TS *)NULL,         //不记录接受的时间
+                  (OS_ERR *)&err);
         OSSemPend((OS_SEM *)&OLED_sem,      //信号量控制块,
                   (OS_TICK)0,             //阻塞等待
                   (OS_OPT)OS_OPT_PEND_BLOCKING,    //阻塞模式
@@ -251,10 +263,38 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
         PFout(9) = !PFout(9);
         OSTimeDlyHMSM(0u, 0u, 0u, 500u,
                       OS_OPT_TIME_HMSM_STRICT,
-                      &err);//1s
+                      &err);//0.5s
+
         ShowDate(0, 0);
         ShowTime(0, 4);
+		
+		count++;
+        if (count >= 20)
+        {
+            //10s，自动息屏
+			OLED_CLS();
+			
+            OSSemSet((OS_SEM *)&OLED_sem,
+                     (OS_SEM_CTR)0,
+                     (OS_ERR *)&err);
 
+            OSSemPost((OS_SEM *)&OLED_sem,            //信号量控制块,
+                      (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
+                      (OS_ERR *)&err);
+
+            OSSemSet((OS_SEM *)&Sleep_sem,
+                     (OS_SEM_CTR)0,
+                     (OS_ERR *)&err);
+			
+            count = 0;
+        }
+        else
+        {
+			//这个信号量用来唤醒时间显示
+            OSSemPost((OS_SEM *)&Sleep_sem,            //信号量控制块,
+                      (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
+                      (OS_ERR *)&err);
+        }
 
         OSSemSet((OS_SEM *)&OLED_sem,
                  (OS_SEM_CTR)0,
@@ -268,27 +308,34 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
 
 static  void  MPU6050Start(void *p_arg)
 {
-    
+    int16_t i = 0;
     int16_t temp = step_cnt;
     OS_ERR  err;
     filter_avg_t filter;
     peak_value_t peak;
     slid_reg_t slid;
     axis_info_t sample;
-
     Check_MPU6050();//校准
+
 
     while (1)
     {
+        i++;
+        if (i == 5)
+        {
+            Get_MPU6050_Data();
+            i = 0;
+        }
         OSTimeDlyHMSM(0u, 0u, 0u, 40u,
                       OS_OPT_TIME_HMSM_STRICT,
                       &err);//40ms
+
+        //下面是用来计步的
         get_4_gyr_data(&filter);
         filter_calculate(&filter, &sample);
         peak_update(&peak, &sample);
         slid_update(&slid, &sample);
         detect_step(&peak, &slid, &sample);
-
         if (temp != step_cnt)
         {
             printf("%d\n", step_cnt);
@@ -348,7 +395,7 @@ static  void  Max30102Start(void *p_arg)
 static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
 {
     OS_ERR  err;
-	char info[64] = {0};
+    char info[64] = {0};
     while (1)
     {
         u8 temp = 100;//弄成一个不会重复的值，不然会有bug（按下去第一下之刷新一部分屏幕）
@@ -412,9 +459,7 @@ static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
                 OLED_ShowStr(0, 0, "menu 2", 2);
                 if (Menu_enter != 0)
                 {
-					
-					
-					Menu_time = 100; //整个数退出循环
+                    Menu_time = 100; //整个数退出循环
                     Menu_enter = 0;
                 }
                 break;
@@ -422,14 +467,14 @@ static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
                 OLED_ShowStr(0, 0, "step", 2);
                 if (Menu_enter != 0)
                 {
-					sprintf(info,"step cnt : %d",step_cnt);
+                    sprintf(info, "step cnt : %d", step_cnt);
                     //证明按了enter
-					OLED_CLS();
-					OLED_ShowStr(0, 0, info, 2);
-					OSTimeDlyHMSM(0u, 0u, 3u, 0u,
-                          OS_OPT_TIME_HMSM_STRICT,
-                          &err);//1s
-					Menu_time = 100; //整个数退出循环
+                    OLED_CLS();
+                    OLED_ShowStr(0, 0, info, 2);
+                    OSTimeDlyHMSM(0u, 0u, 3u, 0u,
+                                  OS_OPT_TIME_HMSM_STRICT,
+                                  &err);//1s
+                    Menu_time = 100; //整个数退出循环
                     Menu_enter = 0;
                 }
                 break;
