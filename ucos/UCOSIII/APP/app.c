@@ -65,6 +65,12 @@ static  OS_TCB   MenuStartTCB;
 static  CPU_STK  MenuStartStk[APP_CFG_TASK_START_STK_SIZE];  //长度128*4 = 512字节
 static  void     MenuStart(void     *p_arg);
 
+//串口时间设置任务
+static  OS_TCB   SetTimeStartTCB;
+static  CPU_STK  SetTimeStartStk[APP_CFG_TASK_START_STK_SIZE];  //长度128*4 = 512字节
+static  void     SetTimeStart(void     *p_arg);
+
+
 OS_FLAG_GRP     my_grp;    //事件标志组控制块，好像没啥用，可以先留着
 OS_SEM          HR_sem;     //心率二值信号量控制块
 OS_SEM          OLED_sem;   //OLED信号量
@@ -78,7 +84,12 @@ u8 Menu_enter = 0;
 
 extern int16_t step_cnt;//计步的
 
-
+//下面是串口用的
+u8 Usart_Data;   //值范围：0~255
+u8 rx_flag = 0;  //接受数据完成 rx_flag = 1
+u8 rx_bluetouth_flag = 0;
+u8 rx_bluetouth_buffer[64] = {0};
+u8 rx_buffer[64] = {0};
 
 
 int main(void)
@@ -167,6 +178,21 @@ static  void  AppTaskStart(void *p_arg)
                  (void *)0u,                                    //不使用补允区
                  (OS_OPT)(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),        //清空堆栈区
                  (OS_ERR *)&err);
+
+    OSTaskCreate((OS_TCB *)&SetTimeStartTCB,               //任务控制块
+                 (CPU_CHAR *)"SetTime Start",          //任务名字
+                 (OS_TASK_PTR)SetTimeStart,                //函数名 函数名是地址
+                 (void *)0u,                                    //函数参数
+                 (OS_PRIO)3,    /*就是这里的优先级！*/                 //优先级
+                 (CPU_STK *)&SetTimeStartStk[0u],          //堆栈基地址
+                 (CPU_STK_SIZE)SetTimeStartStk[APP_CFG_TASK_START_STK_SIZE / 10u],   //堆栈深度
+                 (CPU_STK_SIZE)APP_CFG_TASK_START_STK_SIZE,     //堆栈大小
+                 (OS_MSG_QTY)0u,                                //禁止内部消息队列
+                 (OS_TICK)0u,                                   //使用SYSTick中断时间做为任务时间片。
+                 (void *)0u,                                    //不使用补允区
+                 (OS_OPT)(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),        //清空堆栈区
+                 (OS_ERR *)&err);
+
 
 
     OSTaskCreate((OS_TCB *)&MPU6050StartTCB,               //任务控制块
@@ -338,7 +364,7 @@ static  void  MPU6050Start(void *p_arg)
             OSSemPost((OS_SEM *)&Sleep_sem,            //信号量控制块,
                       (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                       (OS_ERR *)&err);
-			printf("wake up time\n");
+            printf("wake up time\n");
         }
         peak_update(&peak, &sample);
         slid_update(&slid, &sample);
@@ -394,10 +420,55 @@ static  void  Max30102Start(void *p_arg)
         OSSemPost((OS_SEM *)&OLED_sem,            //信号量控制块,
                   (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                   (OS_ERR *)&err);
-
     }
 
 }
+
+static  void  SetTimeStart(void *p_arg)
+{
+    OS_ERR  err;
+    while (1)
+    {
+		OSTimeDlyHMSM(0u, 0u, 0u, 200u,
+                      OS_OPT_TIME_HMSM_STRICT,
+                      &err);//40ms
+        if (rx_bluetouth_flag == 1)
+        {
+            PFout(10) = 1;
+            //"HST095530:" 9时55分30秒（设置时间）
+            if (strncmp("HST", rx_bluetouth_buffer, 3) == 0)
+            {
+                RTC_TimeTypeDef  RTC_TimeStruct;
+
+                RTC_TimeStruct.RTC_H12      = RTC_H12_PM;               //对于24小时格式，这个参数可以不用
+                RTC_TimeStruct.RTC_Hours    = (rx_bluetouth_buffer[3] - 48) * 10 + (rx_bluetouth_buffer[4] - 48); //时
+                RTC_TimeStruct.RTC_Minutes  = (rx_bluetouth_buffer[5] - 48) * 10 + (rx_bluetouth_buffer[6] - 48); //分
+                RTC_TimeStruct.RTC_Seconds  = (rx_bluetouth_buffer[7] - 48) * 10 + (rx_bluetouth_buffer[8] - 48); //秒
+                // 设置时间：
+                RTC_SetTime(RTC_Format_BIN, &RTC_TimeStruct);
+            }
+
+            //"HSD2008204" 20年8月20日 星期4（设置日期）
+            else if (strncmp("HSD", rx_bluetouth_buffer, 3) == 0)
+            {
+                RTC_DateTypeDef  RTC_DateStruct;
+
+                RTC_DateStruct.RTC_Year     = (rx_bluetouth_buffer[3] - 48) * 10 + (rx_bluetouth_buffer[4] - 48); //20年，前年20要自己补
+                RTC_DateStruct.RTC_Month    = (rx_bluetouth_buffer[5] - 48) * 10 + (rx_bluetouth_buffer[6] - 48); //月
+                RTC_DateStruct.RTC_Date     = (rx_bluetouth_buffer[7] - 48) * 10 + (rx_bluetouth_buffer[8] - 48); //日
+                RTC_DateStruct.RTC_WeekDay  = (rx_bluetouth_buffer[9] - 48);                                    //星期
+                // 设置日期：
+                RTC_SetDate(RTC_Format_BIN, &RTC_DateStruct);
+            }
+			
+            rx_bluetouth_flag = 0;  //取消数据处理标志位
+        }
+
+    }
+
+
+}
+
 
 static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
 {
@@ -442,8 +513,6 @@ static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
                     //证明按了enter
                     Menu_enter = 0;
                 }
-
-
 
                 break;
             case 1:

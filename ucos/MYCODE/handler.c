@@ -1,11 +1,14 @@
 #include "handler.h"
 
 //串口相关操作
-u8 Usart_Data;   //值范围：0~255
-u8 rx_flag = 0;  //接受数据完成 rx_flag = 1
-u8 buffer[64] = {0};
-u8 rx_buffer[64] = {0};
-u8 rx_i = 0, count = 0;
+//u8 Usart_Data;   //值范围：0~255
+//u8 rx_flag = 0;  //接受数据完成 rx_flag = 1
+//u8 buffer[64] = {0};
+//u8 rx_buffer[64] = {0};
+//u8 rx_i = 0, count = 0;
+
+extern u8 rx_bluetouth_buffer[64];
+extern u8 rx_bluetouth_flag;
 
 OS_ERR  err;
 extern OS_SEM      HR_sem;
@@ -164,6 +167,9 @@ void EXTI4_IRQHandler(void)//按键4 exit, 这个按钮好像没啥用了，弄成息屏好像不错
 void USART1_IRQHandler(void)//接受串口的东西，调试蓝牙的时候才用得上
 {
     OSIntEnter();
+    static u8 buffer[64] = {0};
+    static u8 rx_i = 0, count = 0;
+
     //若是非空，则返回值为1，与RESET（0）判断，不相等则判断为真
     if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {
@@ -177,11 +183,12 @@ void USART1_IRQHandler(void)//接受串口的东西，调试蓝牙的时候才用得上
             //去除:
             for (rx_i = 0; rx_i < (count - 1); rx_i++)
             {
-                rx_buffer[rx_i] = buffer[rx_i];
+                rx_bluetouth_buffer[rx_i] = buffer[rx_i];
             }
+
             memset(buffer, 0, sizeof(buffer));
             count = 0;  //置为0,下一帧数据从buffer[0]开始存储
-            rx_flag = 1; //接受数据完成 rx_flag = 1
+            rx_bluetouth_flag = 1; //接受数据完成 rx_flag = 1
         }
     }
     OSIntExit();
