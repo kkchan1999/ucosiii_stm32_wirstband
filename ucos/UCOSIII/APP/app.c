@@ -267,13 +267,13 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
 
         ShowDate(0, 0);
         ShowTime(0, 4);
-		
-		count++;
+
+        count++;
         if (count >= 20)
         {
             //10s，自动息屏
-			OLED_CLS();
-			
+            OLED_CLS();
+
             OSSemSet((OS_SEM *)&OLED_sem,
                      (OS_SEM_CTR)0,
                      (OS_ERR *)&err);
@@ -285,12 +285,12 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
             OSSemSet((OS_SEM *)&Sleep_sem,
                      (OS_SEM_CTR)0,
                      (OS_ERR *)&err);
-			
+
             count = 0;
         }
         else
         {
-			//这个信号量用来唤醒时间显示
+            //这个信号量用来唤醒时间显示
             OSSemPost((OS_SEM *)&Sleep_sem,            //信号量控制块,
                       (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                       (OS_ERR *)&err);
@@ -333,6 +333,13 @@ static  void  MPU6050Start(void *p_arg)
         //下面是用来计步的
         get_4_gyr_data(&filter);
         filter_calculate(&filter, &sample);
+        if (sample.x > 5000 || sample.y > 5000 || sample.z > 5000)
+        {
+            OSSemPost((OS_SEM *)&Sleep_sem,            //信号量控制块,
+                      (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
+                      (OS_ERR *)&err);
+			printf("wake up time\n");
+        }
         peak_update(&peak, &sample);
         slid_update(&slid, &sample);
         detect_step(&peak, &slid, &sample);
