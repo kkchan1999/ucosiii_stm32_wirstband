@@ -14,23 +14,43 @@
 #include "algorithm.h"
 #include "max30102.h"
 #include "heartrate.h"
+#include "step.h"
+
+filter_avg_t filter;
+peak_value_t peak;
+slid_reg_t slid;
+axis_info_t sample;
+
+extern int16_t step_cnt;
 
 int main(void)
 {
-    int16_t HR;
+    int16_t temp = step_cnt;
     Delay_Init();
     Usart1_Init();
-    max30102_init();
+    Led_Init();
+    //max30102_init();
     OLED_Init();
-//    HR_init();
+    InitMPU6050();
+    Check_MPU6050();//У׼
+
+	printf("start!\n");
+	
     while (1)
     {
-        HR = Show_HR();
-        OLED_CLS();
-        OLED_ShowBigNum(0, 0, HR / 100);
-        OLED_ShowBigNum(16, 0, (HR % 100) / 10);
-        OLED_ShowBigNum(32, 0, (HR % 10));
-        OLED_ShowBigNum(48, 0, 10);
-        delay_s(1);
+        get_4_gyr_data(&filter);
+		//get_4_acc_data(&filter);//不太准，还是要用陀螺仪
+        filter_calculate(&filter, &sample);
+        peak_update(&peak, &sample);
+        slid_update(&slid, &sample);
+        detect_step(&peak, &slid, &sample);
+
+        if (temp != step_cnt)
+        {
+            printf("%d\n", step_cnt);
+            temp = step_cnt;
+        }
+        delay_ms(40);
+
     }
 }

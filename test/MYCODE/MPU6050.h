@@ -2,6 +2,7 @@
 #define __MPU6050_H
 #include "stm32f4xx.h"
 #include "delay.h"
+#include "step.h"
 //****************************************
 // 定义MPU6050内部地址
 //****************************************
@@ -51,4 +52,6 @@ void InitMPU6050(void);
 void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot_f);//卡尔曼滤波
 void Check_MPU6050(void);
 void Get_MPU6050_Data(void);
+void get_4_gyr_data(filter_avg_t *filter);
+void get_4_acc_data(filter_avg_t *filter);
 #endif

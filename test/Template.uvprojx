@@ -447,6 +447,11 @@
               <FileType>1</FileType>
               <FilePath>.\MYCODE\heartrate.c</FilePath>
             </File>
+            <File>
+              <FileName>step.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MYCODE\step.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

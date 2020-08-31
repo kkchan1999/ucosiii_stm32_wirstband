@@ -1,6 +1,7 @@
 #include "MPU6050.h"
 #include "iic.h"
 #include "math.h"
+
 int16_t acc[3] = {0};
 int16_t gyr[3] = {0};
 int32_t avg[6] = {0};
@@ -100,6 +101,32 @@ void Get_MPU6050_Data(void)
     printf("angle dot:  X=%f   Y=%f   Z=%f  \n", angle_dot[0], angle_dot[1], angle_dot[2]);
 
 }
+
+void get_4_gyr_data(filter_avg_t *filter)
+{
+    u8 i;
+    for (i = 0; i < FILTER_CNT; i++)
+    {
+		delay_ms(40);
+        filter->info[i].x = GetData(GYRO_XOUT_H) - avg[3];
+        filter->info[i].y = GetData(GYRO_YOUT_H) - avg[4];
+        filter->info[i].z = GetData(GYRO_ZOUT_H) - avg[5] ;
+    }
+}
+
+
+void get_4_acc_data(filter_avg_t *filter)
+{
+    u8 i;
+    for (i = 0; i < FILTER_CNT; i++)
+    {
+		delay_ms(40);
+        filter->info[i].x = GetData(ACCEL_XOUT_H) - avg[0];
+        filter->info[i].y = GetData(ACCEL_YOUT_H) - avg[1];
+        filter->info[i].z = GetData(ACCEL_ZOUT_H) - avg[2];
+    }
+}
+
 
 
 //**************************************

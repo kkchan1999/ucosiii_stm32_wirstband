@@ -119,7 +119,7 @@ void EXTI3_IRQHandler(void)//按键3 enter
     OSIntExit();
 }
 
-void EXTI4_IRQHandler(void)//按键4 exit
+void EXTI4_IRQHandler(void)//按键4 exit, 这个按钮好像没啥用了，弄成息屏好像不错
 {
     OSIntEnter();
     u8 flag;//弄个flag用来消抖
