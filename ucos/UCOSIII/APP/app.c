@@ -38,7 +38,7 @@
 
 #define  APP_TASK_EQ_0_ITERATION_NBR              16u
 
-
+#define SIT_TIME 10
 
 
 static  OS_TCB   AppTaskStartTCB;
@@ -92,9 +92,9 @@ u8 rx_bluetouth_buffer[64] = {0};
 u8 rx_buffer[64] = {0};
 
 u8 alarm_flag = 0;
-
+u8 sit_flag = 0;
 extern unsigned char HEART[];
-
+extern unsigned char RUN[];
 int main(void)
 {
     OS_ERR  err;
@@ -269,6 +269,7 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
 {
     //准确点来说这个是时间的显示，后面要配合按键改一改这个东西，要用到信号量的
     OS_ERR  err;
+	u8 mode = 0;
     u8 count = 0;
     OLED_Fill(0xFF);//全屏点亮
     OSTimeDlyHMSM(0u, 0u, 1u, 0u,
@@ -288,14 +289,14 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
                   (OS_OPT)OS_OPT_PEND_BLOCKING,    //阻塞模式
                   (CPU_TS *)NULL,         //不记录接受的时间
                   (OS_ERR *)&err);
-
+		
         PFout(9) = !PFout(9);
         OSTimeDlyHMSM(0u, 0u, 0u, 500u,
                       OS_OPT_TIME_HMSM_STRICT,
                       &err);//0.5s
-
-        ShowDate(0, 0);
-        ShowTime(0, 4);
+		
+        ShowDate(0, 0, mode);
+        ShowTime(0, 4, mode);
 
         count++;
         if (count >= 20)
@@ -400,7 +401,7 @@ static  void  Max30102Start(void *p_arg)
                   (OS_ERR *)&err);
 		
         //OLED_ShowStr(0, 0, "Heart Rate Start", 2);
-		//OLED_DrawBMP(0,0,128,8,HEART);
+		OLED_DrawBMP(0,0,128,8,HEART);
 		
         HR = Show_HR();//初始化心率
         OSTimeDlyHMSM(0u, 0u, 1u, 0u,
@@ -431,13 +432,34 @@ static  void  Max30102Start(void *p_arg)
 
 static  void  SetTimeStart(void *p_arg)
 {
+	int16_t time = 0;
+	int16_t step_temp = step_cnt;
     OS_ERR  err;
+	RTC_TimeTypeDef RTC_TimeStruct;
+    
     while (1)
     {
 		OSTimeDlyHMSM(0u, 0u, 0u, 200u,
                       OS_OPT_TIME_HMSM_STRICT,
-                      &err);//40ms
-        if (rx_bluetouth_flag == 1)
+                      &err);//200ms
+		time++;
+		
+		if(time >= SIT_TIME*60*5)//分钟
+		{
+			RTC_GetTime(RTC_Format_BIN, &RTC_TimeStruct);
+			if(step_cnt - step_temp <= 50&&(RTC_TimeStruct.RTC_Hours>=8&&RTC_TimeStruct.RTC_Hours<=22))
+			{
+				printf("sit too long\n");
+				//整个喇叭响一下
+				PFout(8) = 1;
+				//顺便把标志位置成非零
+				sit_flag = 1;
+			}
+			time =0;//时间复位
+			step_temp = step_cnt;//同步步数
+		}
+		
+        if (rx_bluetouth_flag == 1)//一直检测是否收到了有效信息,这个是瞬间发生的，基本上可以忽略时间
         {
             PFout(10) = 1;
             //"HST095530:" 9时55分30秒（设置时间）
@@ -542,7 +564,9 @@ static  void  SetTimeStart(void *p_arg)
             rx_bluetouth_flag = 0;  //取消数据处理标志位
         }
 
-    }
+		
+		
+	}
 
 
 }
@@ -601,12 +625,13 @@ static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
                 }
                 break;
             case 1:
-                OLED_ShowStr(0, 0, "step", 2);
+                OLED_DrawBMP(0,0,128,8,RUN);
                 if (Menu_enter != 0)
                 {
-                    sprintf(info, "step cnt : %d", step_cnt);
+                    sprintf(info, "%d", step_cnt);
                     //证明按了enter
-                    OLED_CLS();
+                    //OLED_CLS();
+					OLED_DrawBMP(0,0,128,8,RUN);
                     OLED_ShowStr(0, 0, info, 2);
                     OSTimeDlyHMSM(0u, 0u, 3u, 0u,
                                   OS_OPT_TIME_HMSM_STRICT,

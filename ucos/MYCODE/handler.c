@@ -26,6 +26,7 @@ extern u8 Menu_flag;    //进入menu的标识
 extern u8 Menu_enter;
 
 extern u8 alarm_flag;
+extern u8 sit_flag;
 
 //编写中断服务函数。这个函数不需要程序员在主函数调用，满足条件CPU自行调用的函数
 void EXTI0_IRQHandler(void)//按键1 prev
@@ -148,21 +149,25 @@ void EXTI4_IRQHandler(void)//按键4 exit, 这个按钮好像没啥用了，弄成息屏好像不错
         flag = GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_4);//读取一下按键的电平
         if (RESET == flag) //在这下面干活
         {
-			if(alarm_flag!=0)//消除闹钟
-			{
-				alarm_flag = 0;//flag置零
-				//下面关闭闹钟的响应事件
-				PEout(13) = 1;
-			}
-//            OSSemPost((OS_SEM *)&Menu_sem,            //信号量控制块,
-//                      (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
-//                      (OS_ERR *)&err);
+            if (alarm_flag != 0) //消除闹钟
+            {
+                alarm_flag = 0;//flag置零
+                //下面关闭闹钟的响应事件
+                PFout(8) = 0;
+            }
+            if (sit_flag != 0)
+            {
+                sit_flag = 0;
+
+                PFout(8) = 0;
+            }
+
             OSSemPost((OS_SEM *)&Sleep_sem,            //信号量控制块,
                       (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                       (OS_ERR *)&err);
-//            PFout(8) = !PFout(8);
-//            delay_ms(100);
-//            PFout(8) = !PFout(8);
+            PFout(8) = !PFout(8);
+            delay_ms(1);
+            PFout(8) = !PFout(8);
             if (Menu_flag != 0) //必须确定在目录里面才能用
             {
                 //在这里写功能
@@ -225,9 +230,9 @@ void RTC_Alarm_IRQHandler(void)//闹钟的中断
         //判断是否为闹钟B
         if (RTC_GetFlagStatus(RTC_FLAG_ALRBF) == SET)
         {
-			alarm_flag = 1;
+            alarm_flag = 1;
             //闹钟响应事件
-            PEout(13) = !PEout(13);
+            PFout(8) = !PFout(8);
             RTC_ClearFlag(RTC_FLAG_ALRBF);
             printf("alarm B is time\n");
         }

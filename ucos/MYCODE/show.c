@@ -1,7 +1,7 @@
 #include "show.h"
 
 
-void ShowTime(unsigned char x, unsigned char y)
+void ShowTime(unsigned char x, unsigned char y, u8 mode)
 {
     RTC_TimeTypeDef RTC_TimeStruct;
     u8 t[6];
@@ -16,15 +16,15 @@ void ShowTime(unsigned char x, unsigned char y)
     {
         if (i == 2 || i == 5)
         {
-            OLED_ShowBigNum(i * 16 + x, y, 10, 0);
+            OLED_ShowBigNum(i * 16 + x, y, 10, mode);
             j--;
             continue;
         }
-        OLED_ShowBigNum(i * 16 + x, y, t[j], 0);
+        OLED_ShowBigNum(i * 16 + x, y, t[j], mode);
     }
 }
 
-void ShowDate(unsigned char x, unsigned char y)
+void ShowDate(unsigned char x, unsigned char y, u8 mode)
 {
     RTC_DateTypeDef RTC_DateStruct;
     u8 d[6];
@@ -40,11 +40,11 @@ void ShowDate(unsigned char x, unsigned char y)
     {
         if (i == 2 || i == 5)
         {
-            OLED_ShowBigNum(i * 16 + x, y, 11, 0);
+            OLED_ShowBigNum(i * 16 + x, y, 11, mode);
             j--;
             continue;
         }
-        OLED_ShowBigNum(i * 16 + x, y, d[j], 0);
+        OLED_ShowBigNum(i * 16 + x, y, d[j], mode);
     }
 
 }
