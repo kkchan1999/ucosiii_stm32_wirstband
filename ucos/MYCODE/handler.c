@@ -7,6 +7,10 @@
 //u8 rx_buffer[64] = {0};
 //u8 rx_i = 0, count = 0;
 
+#define MENU_MAX 1
+#define MENU_MIN 0
+
+
 extern u8 rx_bluetouth_buffer[64];
 extern u8 rx_bluetouth_flag;
 
@@ -20,6 +24,8 @@ extern u8 Menu_time;    //弄个时间限制，太久没反应的话直接返回时间显示界面
 extern u8 sleek;        //记录目前是啥功能
 extern u8 Menu_flag;    //进入menu的标识
 extern u8 Menu_enter;
+
+extern u8 alarm_flag;
 
 //编写中断服务函数。这个函数不需要程序员在主函数调用，满足条件CPU自行调用的函数
 void EXTI0_IRQHandler(void)//按键1 prev
@@ -41,13 +47,13 @@ void EXTI0_IRQHandler(void)//按键1 prev
                       (OS_ERR *)&err);
 
             //变更灯状态
-            GPIO_ToggleBits(GPIOF, GPIO_Pin_9);
+            //GPIO_ToggleBits(GPIOF, GPIO_Pin_9);
 
             //时间重置
             Menu_time = 0;
-            if (sleek - 1 < 0)
+            if (sleek - 1 < MENU_MIN)
             {
-                sleek = 3;
+                sleek = MENU_MAX;
             }
             else
             {
@@ -79,13 +85,13 @@ void EXTI2_IRQHandler(void)//按键2 next
                       (OS_ERR *)&err);
 
             //变更灯状态
-            GPIO_ToggleBits(GPIOF, GPIO_Pin_10);
+            //GPIO_ToggleBits(GPIOF, GPIO_Pin_10);
 
             //时间重置
             Menu_time = 0;
-            if (sleek + 1 > 3)
+            if (sleek + 1 > MENU_MAX)
             {
-                sleek = 0;
+                sleek = MENU_MIN;
             }
             else
             {
@@ -119,7 +125,7 @@ void EXTI3_IRQHandler(void)//按键3 enter
             {
                 //在这里写功能
                 Menu_enter = 1;
-                GPIO_ToggleBits(GPIOE, GPIO_Pin_13);//变更灯状态
+                //GPIO_ToggleBits(GPIOE, GPIO_Pin_13);//变更灯状态
             }
 
             Menu_flag = 1;
@@ -142,18 +148,25 @@ void EXTI4_IRQHandler(void)//按键4 exit, 这个按钮好像没啥用了，弄成息屏好像不错
         flag = GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_4);//读取一下按键的电平
         if (RESET == flag) //在这下面干活
         {
+			if(alarm_flag!=0)//消除闹钟
+			{
+				alarm_flag = 0;//flag置零
+				//下面关闭闹钟的响应事件
+				PEout(13) = 1;
+			}
 //            OSSemPost((OS_SEM *)&Menu_sem,            //信号量控制块,
 //                      (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
 //                      (OS_ERR *)&err);
             OSSemPost((OS_SEM *)&Sleep_sem,            //信号量控制块,
                       (OS_OPT)OS_OPT_POST_ALL,        //向等待该信号量的所有任务发送信号量
                       (OS_ERR *)&err);
-
-
+//            PFout(8) = !PFout(8);
+//            delay_ms(100);
+//            PFout(8) = !PFout(8);
             if (Menu_flag != 0) //必须确定在目录里面才能用
             {
                 //在这里写功能
-                GPIO_ToggleBits(GPIOE, GPIO_Pin_14);//变更灯状态
+                //GPIO_ToggleBits(GPIOE, GPIO_Pin_14);//变更灯状态
             }
 
             Menu_flag = 1;
@@ -194,7 +207,36 @@ void USART1_IRQHandler(void)//接受串口的东西，调试蓝牙的时候才用得上
     OSIntExit();
 }
 
+void RTC_Alarm_IRQHandler(void)//闹钟的中断
+{
 
+    OSIntEnter();
+    //判断中断标志是否为1
+    if (EXTI_GetITStatus(EXTI_Line17) == SET)
+    {
+        //判断是否为闹钟A
+        if (RTC_GetFlagStatus(RTC_FLAG_ALRAF) == SET)
+        {
+            //闹钟响应事件
+            PFout(9) = 0;
+            RTC_ClearFlag(RTC_FLAG_ALRAF);
+        }
+
+        //判断是否为闹钟B
+        if (RTC_GetFlagStatus(RTC_FLAG_ALRBF) == SET)
+        {
+			alarm_flag = 1;
+            //闹钟响应事件
+            PEout(13) = !PEout(13);
+            RTC_ClearFlag(RTC_FLAG_ALRBF);
+            printf("alarm B is time\n");
+        }
+
+        //清空标志位
+        EXTI_ClearITPendingBit(EXTI_Line17);
+    }
+    OSIntExit();
+}
 
 
 

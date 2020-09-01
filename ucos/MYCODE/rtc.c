@@ -44,4 +44,98 @@ void Rtc_Init(void)
 
 }
 
+void RTC_Alarm_AInit(void)
+{
+    RTC_TimeTypeDef RTC_AlarmTime;
+    RTC_AlarmTypeDef RTC_AlarmStruct;
+    EXTI_InitTypeDef  EXTI_InitStruct;
+    NVIC_InitTypeDef  NVIC_InitStruct;
 
+    //2、关闭闹钟：
+    RTC_AlarmCmd(RTC_Alarm_A, DISABLE);
+
+
+    //闹钟时间设置
+    RTC_AlarmTime.RTC_H12       = RTC_H12_PM;  //对于24小时格式，这个参数可以不用
+    RTC_AlarmTime.RTC_Hours     = 16; //时
+    RTC_AlarmTime.RTC_Minutes   = 36; //分
+    RTC_AlarmTime.RTC_Seconds   = 30; //秒
+
+    RTC_AlarmStruct.RTC_AlarmTime           = RTC_AlarmTime;        //时间设置
+    RTC_AlarmStruct.RTC_AlarmMask           = RTC_AlarmMask_None;   //无掩码位 按实际时间来响应闹钟
+    RTC_AlarmStruct.RTC_AlarmDateWeekDaySel = RTC_AlarmDateWeekDaySel_WeekDay; //按星期来闹钟
+    RTC_AlarmStruct.RTC_AlarmDateWeekDay    = RTC_Weekday_Wednesday;  //星期3
+
+
+    //3、配置闹钟参数：
+    RTC_SetAlarm(RTC_Format_BIN, RTC_Alarm_A, &RTC_AlarmStruct);
+
+    //4、开启闹钟：
+    RTC_AlarmCmd(RTC_Alarm_A, ENABLE);
+    //5、开启配置闹钟中断：
+
+    RTC_ITConfig(RTC_IT_ALRA, ENABLE);
+
+    EXTI_InitStruct.EXTI_Line   = EXTI_Line17;          //中断线17
+    EXTI_InitStruct.EXTI_Mode   = EXTI_Mode_Interrupt;  //中断模式
+    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising; //上升沿触发
+    EXTI_InitStruct.EXTI_LineCmd = ENABLE;              //中断线使能
+    //初始化线上中断，设置触发条件等。
+    EXTI_Init(&EXTI_InitStruct);
+
+    NVIC_InitStruct.NVIC_IRQChannel                     = RTC_Alarm_IRQn;   //NVIC通道，在stm32f4xx.h可查看通道 （可变）
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority   = 0x01;         //抢占优先级
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority          = 0x01;         //响应优先级
+    NVIC_InitStruct.NVIC_IRQChannelCmd                  = ENABLE;       //使能
+    //配置中断分组（NVIC），并使能中断。
+    NVIC_Init(&NVIC_InitStruct);
+
+
+}
+
+void RTC_Alarm_BInit(void)
+{
+    RTC_TimeTypeDef     RTC_AlarmTime;
+    RTC_AlarmTypeDef    RTC_AlarmStruct;
+    EXTI_InitTypeDef    EXTI_InitStruct;
+    NVIC_InitTypeDef    NVIC_InitStruct;
+
+    //2、关闭闹钟：
+    RTC_AlarmCmd(RTC_Alarm_B, DISABLE);
+
+    //闹钟时间设置
+    RTC_AlarmTime.RTC_H12       = RTC_H12_PM;  //对于24小时格式，这个参数可以不用
+    RTC_AlarmTime.RTC_Hours     = 1; //时
+    RTC_AlarmTime.RTC_Minutes   = 1; //分
+    RTC_AlarmTime.RTC_Seconds   = 1; //秒
+
+    RTC_AlarmStruct.RTC_AlarmTime           = RTC_AlarmTime;        //时间设置
+    RTC_AlarmStruct.RTC_AlarmMask           = RTC_AlarmMask_None;   //无掩码位 按实际时间来响应闹钟
+    RTC_AlarmStruct.RTC_AlarmDateWeekDaySel = RTC_AlarmDateWeekDaySel_WeekDay;  //按星期来闹钟
+    RTC_AlarmStruct.RTC_AlarmDateWeekDay    = 1;                    //星期3
+
+
+    //3、配置闹钟参数：
+    RTC_SetAlarm(RTC_Format_BIN, RTC_Alarm_B, &RTC_AlarmStruct);
+
+    //4、开启闹钟：
+    //RTC_AlarmCmd(RTC_Alarm_B,ENABLE);
+
+    //5、开启配置闹钟中断：
+
+    RTC_ITConfig(RTC_IT_ALRB, ENABLE);
+
+    EXTI_InitStruct.EXTI_Line   = EXTI_Line17;          //中断线17
+    EXTI_InitStruct.EXTI_Mode   = EXTI_Mode_Interrupt;  //中断模式
+    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising; //上升沿触发
+    EXTI_InitStruct.EXTI_LineCmd = ENABLE;              //中断线使能
+    //初始化线上中断，设置触发条件等。
+    EXTI_Init(&EXTI_InitStruct);
+
+    NVIC_InitStruct.NVIC_IRQChannel                     = RTC_Alarm_IRQn;   //NVIC通道，在stm32f4xx.h可查看通道 （可变）
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority   = 0x01;         //抢占优先级
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority          = 0x01;         //响应优先级
+    NVIC_InitStruct.NVIC_IRQChannelCmd                  = ENABLE;       //使能
+    //配置中断分组（NVIC），并使能中断。
+    NVIC_Init(&NVIC_InitStruct);
+}

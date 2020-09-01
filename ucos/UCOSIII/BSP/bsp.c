@@ -252,6 +252,9 @@ void  BSP_Init(void)
 	OLED_Init();//初始化OLED
 	Rtc_Init();//RTC时钟初始化
 	max30102_init();
+	RTC_Alarm_AInit();
+	RTC_Alarm_BInit();
+	beep_init();
 	
 }
 

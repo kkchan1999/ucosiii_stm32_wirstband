@@ -91,6 +91,9 @@ u8 rx_bluetouth_flag = 0;
 u8 rx_bluetouth_buffer[64] = {0};
 u8 rx_buffer[64] = {0};
 
+u8 alarm_flag = 0;
+
+extern unsigned char HEART[];
 
 int main(void)
 {
@@ -334,7 +337,7 @@ static  void  TimeStart(void *p_arg)//界面显示，需要很多flag
 
 static  void  MPU6050Start(void *p_arg)
 {
-    int16_t i = 0;
+//    int16_t i = 0;
     int16_t temp = step_cnt;
     OS_ERR  err;
     filter_avg_t filter;
@@ -346,12 +349,12 @@ static  void  MPU6050Start(void *p_arg)
 
     while (1)
     {
-        i++;
-        if (i == 5)
-        {
-            Get_MPU6050_Data();
-            i = 0;
-        }
+//        i++;
+//        if (i == 5)
+//        {
+//            Get_MPU6050_Data();
+//            i = 0;
+//        }
         OSTimeDlyHMSM(0u, 0u, 0u, 40u,
                       OS_OPT_TIME_HMSM_STRICT,
                       &err);//40ms
@@ -379,6 +382,7 @@ static  void  MPU6050Start(void *p_arg)
 
 static  void  Max30102Start(void *p_arg)
 {
+	
     OS_ERR  err;
     int16_t HR;
     while (1)
@@ -394,14 +398,15 @@ static  void  Max30102Start(void *p_arg)
                   (OS_OPT)OS_OPT_PEND_BLOCKING,    //阻塞模式
                   (CPU_TS *)NULL,         //不记录接受的时间
                   (OS_ERR *)&err);
-
-        OLED_ShowStr(0, 0, "Heart Rate Start", 2);
-
+		
+        //OLED_ShowStr(0, 0, "Heart Rate Start", 2);
+		//OLED_DrawBMP(0,0,128,8,HEART);
+		
         HR = Show_HR();//初始化心率
         OSTimeDlyHMSM(0u, 0u, 1u, 0u,
                       OS_OPT_TIME_HMSM_STRICT,
                       &err);//5s
-        OLED_CLS();
+        
         OLED_ShowBigNum(0, 0, HR / 100, 0);
         OLED_ShowBigNum(16, 0, (HR % 100) / 10, 0);
         OLED_ShowBigNum(32, 0, (HR % 10), 0);
@@ -410,7 +415,7 @@ static  void  Max30102Start(void *p_arg)
         OSTimeDlyHMSM(0u, 0u, 5u, 0u,
                       OS_OPT_TIME_HMSM_STRICT,
                       &err);//5s
-
+		OLED_CLS();
 
         OSSemSet((OS_SEM *)&OLED_sem,  //释放信号量之前弄成0，防止信号量太多阻塞不了
                  (OS_SEM_CTR)0,
@@ -448,7 +453,7 @@ static  void  SetTimeStart(void *p_arg)
                 RTC_SetTime(RTC_Format_BIN, &RTC_TimeStruct);
             }
 
-            //"HSD2008204" 20年8月20日 星期4（设置日期）
+            //"HSD2008204" 20年8月20日 	
             else if (strncmp("HSD", rx_bluetouth_buffer, 3) == 0)
             {
                 RTC_DateTypeDef  RTC_DateStruct;
@@ -460,7 +465,80 @@ static  void  SetTimeStart(void *p_arg)
                 // 设置日期：
                 RTC_SetDate(RTC_Format_BIN, &RTC_DateStruct);
             }
+			else if (strncmp("HHR", rx_bluetouth_buffer, 3) == 0)
+            {
+				printf("step is : %d\n",step_cnt);
+            }
+					//"HSAD09560020:" 9时56分00秒 20日（按日期设置闹钟）
+		else if(strncmp("HSAD", rx_bluetouth_buffer, 4) == 0)
+		{
+			RTC_AlarmTypeDef	RTC_AlarmStruct;
+			RTC_TimeTypeDef		RTC_AlarmTime;
+
+			u8 Hours	= (rx_bluetouth_buffer[4]-48)*10 + (rx_bluetouth_buffer[5]-48);	//时
+			u8 Minutes	= (rx_bluetouth_buffer[6]-48)*10 + (rx_bluetouth_buffer[7]-48);	//分
+			u8 Seconds	= (rx_bluetouth_buffer[8]-48)*10 + (rx_bluetouth_buffer[9]-48);	//秒
+			u8 Date	= (rx_bluetouth_buffer[10]-48)*10 + (rx_bluetouth_buffer[11]-48);	//日 
 			
+			// 关闭闹钟
+			RTC_AlarmCmd(RTC_Alarm_B,DISABLE); 
+	
+			//闹钟时间设置
+			RTC_AlarmTime.RTC_H12		= RTC_H12_PM;  //对于24小时格式，这个参数可以不用
+			RTC_AlarmTime.RTC_Hours		= Hours; //时
+			RTC_AlarmTime.RTC_Minutes	= Minutes; //分
+			RTC_AlarmTime.RTC_Seconds	= Seconds; //秒
+			
+			RTC_AlarmStruct.RTC_AlarmTime 			= RTC_AlarmTime;  		//时间设置
+			RTC_AlarmStruct.RTC_AlarmMask			= RTC_AlarmMask_None;	//无掩码位 按实际时间来响应闹钟
+			RTC_AlarmStruct.RTC_AlarmDateWeekDaySel	= RTC_AlarmDateWeekDaySel_Date; 			//按星期来闹钟
+			RTC_AlarmStruct.RTC_AlarmDateWeekDay	= Date;  				//星期3
+				
+
+			// 配置闹钟参数：
+			RTC_SetAlarm(RTC_Format_BIN, RTC_Alarm_B, &RTC_AlarmStruct);
+				
+			// 开启闹钟：
+			RTC_AlarmCmd(RTC_Alarm_B,ENABLE);
+			
+			printf("set alarm date ok!\n");
+		}
+		
+		//"HSAW0956004:" 9时56分00秒 星期4（按星期设置闹钟）
+		else if(strncmp("HSAW", rx_bluetouth_buffer, 4) == 0)
+		{
+			RTC_AlarmTypeDef	RTC_AlarmStruct;
+			RTC_TimeTypeDef		RTC_AlarmTime;
+			
+			u8 Hours	= (rx_bluetouth_buffer[4]-48)*10 + (rx_bluetouth_buffer[5]-48);	//时
+			u8 Minutes	= (rx_bluetouth_buffer[6]-48)*10 + (rx_bluetouth_buffer[7]-48);	//分
+			u8 Seconds	= (rx_bluetouth_buffer[8]-48)*10 + (rx_bluetouth_buffer[9]-48);	//秒
+			u8 WeekDay	= rx_bluetouth_buffer[10]-48;		//星期 	
+			
+			// 关闭闹钟
+			RTC_AlarmCmd(RTC_Alarm_B,DISABLE); 
+	
+			// 闹钟时间设置
+			RTC_AlarmTime.RTC_H12		= RTC_H12_PM;  //对于24小时格式，这个参数可以不用
+			RTC_AlarmTime.RTC_Hours		= Hours; //时
+			RTC_AlarmTime.RTC_Minutes	= Minutes; //分
+			RTC_AlarmTime.RTC_Seconds	= Seconds; //秒
+			
+			RTC_AlarmStruct.RTC_AlarmTime 			= RTC_AlarmTime;  		//时间设置
+			RTC_AlarmStruct.RTC_AlarmMask			= RTC_AlarmMask_None;	//无掩码位 按实际时间来响应闹钟
+			RTC_AlarmStruct.RTC_AlarmDateWeekDaySel	= RTC_AlarmDateWeekDaySel_WeekDay; 			//按星期来闹钟
+			RTC_AlarmStruct.RTC_AlarmDateWeekDay	= WeekDay;  			//星期3
+				
+
+			// 配置闹钟参数：
+			RTC_SetAlarm(RTC_Format_BIN, RTC_Alarm_B, &RTC_AlarmStruct);
+				
+			// 开启闹钟：
+			RTC_AlarmCmd(RTC_Alarm_B,ENABLE);
+			
+			printf("set alarm week ok!\n");
+		}
+				
             rx_bluetouth_flag = 0;  //取消数据处理标志位
         }
 
@@ -507,17 +585,8 @@ static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
             switch (sleek)//一直查询任务的状态，检测到enter之后进入任务
             {
             case 0:
-                OLED_ShowStr(0, 0, "menu 0", 2);
-                if (Menu_enter != 0)
-                {
-                    //证明按了enter
-                    Menu_enter = 0;
-                }
-
-                break;
-            case 1:
-                OLED_ShowStr(0, 0, "HR", 2);
-
+//                OLED_ShowStr(0, 0, "HR", 2);
+				OLED_DrawBMP(0,0,128,8,HEART);
                 if (Menu_enter != 0)//证明按了enter
                 {
                     //进入心率检测功能
@@ -531,15 +600,7 @@ static  void  MenuStart(void *p_arg)//这个任务用于目录的显示
                     Menu_enter = 0;
                 }
                 break;
-            case 2:
-                OLED_ShowStr(0, 0, "menu 2", 2);
-                if (Menu_enter != 0)
-                {
-                    Menu_time = 100; //整个数退出循环
-                    Menu_enter = 0;
-                }
-                break;
-            case 3:
+            case 1:
                 OLED_ShowStr(0, 0, "step", 2);
                 if (Menu_enter != 0)
                 {
