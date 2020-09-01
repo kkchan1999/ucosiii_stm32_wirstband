@@ -38,7 +38,7 @@
 
 #define  APP_TASK_EQ_0_ITERATION_NBR              16u
 
-#define SIT_TIME 10
+#define SIT_TIME 30
 
 
 static  OS_TCB   AppTaskStartTCB;
